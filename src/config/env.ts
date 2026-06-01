@@ -14,14 +14,20 @@ const EnvSchema = z.object({
   ADMIN_EMAIL: z.string().email().default('admin@canopy.example'),
   ADMIN_PASSWORD: z.string().min(8).default('admin12345'),
   ADMIN_NAME: z.string().min(1).default('Canopy Admin'),
+
+  // Allowed CORS origin for the browser frontends (different origin in prod).
+  // Use '*' for any, or a specific origin like https://canopy-farmer.vercel.app.
+  CORS_ORIGIN: z.string().default('*'),
 });
 
 const parsed = EnvSchema.safeParse(process.env);
 
 if (!parsed.success) {
-  console.error('Invalid environment configuration:');
-  console.error(parsed.error.flatten().fieldErrors);
-  process.exit(1);
+  // Throw (don't process.exit): in a serverless function exit() yields an opaque
+  // crash, while a thrown Error surfaces the missing vars in the function logs.
+  const fields = parsed.error.flatten().fieldErrors;
+  console.error('Invalid environment configuration:', fields);
+  throw new Error(`Invalid environment configuration: ${JSON.stringify(fields)}`);
 }
 
 export const env = parsed.data;

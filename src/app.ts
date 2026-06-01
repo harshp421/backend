@@ -1,4 +1,5 @@
-import express, { type Request, type Response } from 'express';
+import express, { type NextFunction, type Request, type Response } from 'express';
+import { env } from './config/env.js';
 import { errorHandler, notFoundHandler } from './errors/errorHandler.js';
 import { pool } from './db/pool.js';
 import { mountDocs } from './docs/openapi.js';
@@ -17,6 +18,20 @@ import {
 
 export function createApp(): express.Express {
   const app = express();
+
+  // CORS — the browser frontends are served from a different origin in prod.
+  // Auth uses Bearer tokens (no cookies), so a wildcard origin is safe here.
+  app.use((req: Request, res: Response, next: NextFunction) => {
+    res.header('Access-Control-Allow-Origin', env.CORS_ORIGIN);
+    res.header('Vary', 'Origin');
+    res.header('Access-Control-Allow-Methods', 'GET,POST,PATCH,DELETE,OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    if (req.method === 'OPTIONS') {
+      res.sendStatus(204);
+      return;
+    }
+    next();
+  });
 
   app.use(express.json({ limit: '100kb' }));
 

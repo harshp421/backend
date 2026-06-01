@@ -1,0 +1,5 @@
+FROM postgres:16-alpine
+
+# Init scripts in this directory run on first container start (empty data dir only).
+# Schema lives in app migrations (src/db/migrations); only DB-level setup goes here.
+COPY init/ /docker-entrypoint-initdb.d/
